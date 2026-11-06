@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cadastro de Alunos</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 850px;
+      margin: 40px auto;
+      padding: 0 15px;
+      background: #f1f5f9;
+    }
+    h1 { color: #1e40af; }
+    input, button {
+      padding: 10px;
+      margin: 5px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
+    th { background: #dbeafe; }
+  </style>
+</head>
+<body>
+
+  <h1>Sistema de Cadastro de Alunos</h1>
+
+  <h3>Novo aluno</h3>
+
+  <form id="formulario">
+    <input id="nome" placeholder="Nome" required>
+    <input id="matricula" placeholder="Matrícula" required>
+    <input id="curso" placeholder="Curso" required>
+    <button type="submit">Cadastrar</button>
+  </form>
+
+  <p id="mensagem" role="status"></p>
+
+  <h3>Alunos cadastrados</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nome</th>
+        <th>Matrícula</th>
+        <th>Curso</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody id="lista"></tbody>
+  </table>
+
+  <script>
+    const mensagem = document.getElementById("mensagem");
+    const formulario = document.getElementById("formulario");
+
+    async function listar() {
+      const resposta = await fetch("/alunos");
+
+      if (!resposta.ok) {
+        mensagem.textContent = "Erro ao carregar alunos";
+        return;
+      }
+
+      const alunos = await resposta.json();
+      const lista = document.getElementById("lista");
+      lista.replaceChildren();
+
+      alunos.forEach(aluno => {
+        const linha = document.createElement("tr");
+
+        ["id", "nome", "matricula", "curso"].forEach(campo => {
+          const celula = document.createElement("td");
+          celula.textContent = aluno[campo];
+          linha.appendChild(celula);
+        });
+
+        const acoes = document.createElement("td");
+        const botao = document.createElement("button");
+
+        botao.textContent = "Excluir";
+        botao.onclick = () => excluir(aluno.id);
+        acoes.appendChild(botao);
+        linha.appendChild(acoes);
+        lista.appendChild(linha);
+      });
+    }
+
+    formulario.addEventListener("submit", async (evento) => {
+      evento.preventDefault();
+
+      const aluno = {
+        nome: document.getElementById("nome").value,
+        matricula: document.getElementById("matricula").value,
+        curso: document.getElementById("curso").value
+      };
+
+      const resposta = await fetch("/alunos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(aluno)
+      });
+
+      const dados = await resposta.json();
+
+      mensagem.textContent = resposta.ok
+        ? "Aluno cadastrado com sucesso!"
+        : dados.erro;
+
+      if (resposta.ok) {
+        formulario.reset();
+        await listar();
+      }
+    });
+
+    async function excluir(id) {
+      const resposta = await fetch("/alunos/" + id, {
+        method: "DELETE"
+      });
+
+      mensagem.textContent = resposta.ok
+        ? "Aluno excluído!"
+        : "Erro ao excluir aluno";
+
+      await listar();
+    }
+
+    listar().catch(() => {
+      mensagem.textContent = "Não foi possível conectar à API";
+    });
+  </script>
+</body>
+</html>
