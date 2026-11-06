@@ -1,6 +1,6 @@
 # Sistema de Cadastro de Alunos com Docker
 
-Atividade prática de **Computação em Nuvem
+Atividade prática de **Computação em Nuvem**
 
 ## O que é o projeto
 
